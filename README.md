@@ -15,7 +15,7 @@ suite := ldproofs.NewJSONWebSignature2020Suite()
 suite.ParseSignatureKey(jsonKey)
 
 err = doc.AddLinkedDataProof(ldproofs.WithSignatureSuite(suite), ldproofs.WithPurpose(ldproofs.AssertionMethod))
-if err !=nil {
+if err != nil {
     return err
 }
 ```
@@ -24,14 +24,24 @@ To verify a document in a function.
 
 ```
 doc, err := ldproofs.NewDocument(jsonCredential)
-if err !=nil {
+if err != nil {
     return err
 }
-suite := ldproofs.NewJSONWebSignature2020Suite()
-suite.ParseVerificationKey(jsonKey)
+ldproofsType, err := doc.GetLinkedDataProofType()
+if err != nil {
+    // will get an error if proof or proof type is not found in the document
+    return err
+}
+switch ldproofsType {
+case "JsonWebSignature2020":
+    suite := ldproofs.NewJSONWebSignature2020Suite()
+    suite.ParseVerificationKey([]byte(rawkey))
+default:
+   return errors.New("linked data proofs type not supported")
+}
 
 err = doc.VerifyLinkedDataProof(ldproofs.WithSignatureSuite(suite))
-if err !=nil {
+if err != nil {
     return err
 }
 ```

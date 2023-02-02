@@ -1,7 +1,6 @@
 package ldproofs_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gossif/ldproofs"
@@ -30,10 +29,8 @@ func TestSigning(t *testing.T) {
 			keyAlgorithm, err := ldproofs.NewAlgorithm(jwkKey)
 			require.NoError(t, err)
 
-			signed, err := keyAlgorithm.Sign([]byte("hello world!"))
+			_, err = keyAlgorithm.Sign([]byte("hello world!"))
 			assert.NoError(t, err)
-
-			fmt.Println(string(signed))
 		})
 	}
 }

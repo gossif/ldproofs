@@ -112,6 +112,7 @@ func TestJws2020Verification(t *testing.T) {
 func TestSignAndVerify(t *testing.T) {
 	for scenario, fn := range map[string]func(t *testing.T){
 		"signing and verifying": testSignDocument,
+		"verifying":             testVerifyDocument,
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			fn(t)
@@ -163,4 +164,64 @@ func testSignDocument(t *testing.T) {
 	fmt.Println(string(bytes))
 	suite.ParseVerificationKey([]byte(rawkey))
 	assert.NoError(t, doc.VerifyLinkedDataProof(ldproofs.WithSignatureSuite(suite)))
+}
+
+func testVerifyDocument(t *testing.T) {
+	rawdoc := `{
+		"@context": [
+			"https://www.w3.org/2018/credentials/v1",
+			"https://w3id.org/security/suites/jws-2020/v1",
+			{
+				"@vocab": "https://example.com/#"
+			}
+		],
+		"credentialSubject": {
+			"foo": "bar"
+		},
+		"issuanceDate": "2022-03-19T15:20:55Z",
+		"issuer": "did:example:123",
+		"proof": {
+			"created": "2023-02-02T06:21:16Z",
+			"jws": "eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ.._6613j5s6kgg09R6Fd3wtkvQZemFaOvkzjztFfLbAVO_SeuASj-OZQg-MJS8unpKIF2ETi3obE4q-xprrzncAg",
+			"proofPurpose": "assertionMethod",
+			"type": "JsonWebSignature2020",
+			"verificationMethod": "did:example:123#key-0"
+		},
+		"type": [
+			"VerifiableCredential"
+		]
+	}`
+
+	rawkey := `{
+		"id": "did:example:123#key-0",
+		"type": "JsonWebKey2020",
+		"controller": "did:example:123",
+		"publicKeyJwk": {
+		  "kty": "OKP",
+		  "crv": "Ed25519",
+		  "x": "JYCAGl6C7gcDeKbNqtXBfpGzH0f5elifj7L6zYNj_Is"
+		},
+		"privateKeyJwk": {
+		  "kty": "OKP",
+		  "crv": "Ed25519",
+		  "x": "JYCAGl6C7gcDeKbNqtXBfpGzH0f5elifj7L6zYNj_Is",
+		  "d": "pLMxJruKPovJlxF3Lu_x9Aw3qe2wcj5WhKUAXYLBjwE"
+		}
+	  }`
+
+	doc, err := ldproofs.NewDocument([]byte(rawdoc))
+	require.NoError(t, err)
+
+	ldproofsType, err := doc.GetLinkedDataProofType()
+	require.NoError(t, err)
+	assert.Equal(t, "JsonWebSignature2020", ldproofsType)
+
+	switch ldproofsType {
+	case "JsonWebSignature2020":
+		suite := ldproofs.NewJSONWebSignature2020Suite()
+		suite.ParseVerificationKey([]byte(rawkey))
+		assert.NoError(t, doc.VerifyLinkedDataProof(ldproofs.WithSignatureSuite(suite)))
+	default:
+		// error
+	}
 }

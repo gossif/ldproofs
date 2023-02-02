@@ -124,7 +124,7 @@ func (k *jws2020Suite) prepareMessage(document DocumentLoader, options ...Signat
 	// prepare the document and the proof options
 	doc := document.GetDocument()
 	proofOptions := Proof{
-		"type":               k.keyPair.Type,
+		"type":               k.GetSignatureType(),
 		"created":            time.Now().UTC().Format(time.RFC3339),
 		"verificationMethod": k.keyPair.Id,
 		"proofPurpose":       theOptions.purpose.String(),
@@ -170,17 +170,14 @@ func (k *jws2020Suite) VerifyLinkedDataProof(document DocumentLoader, options ..
 	var proofOptions Proof
 	switch proof := doc["proof"].(type) {
 	case map[string]interface{}:
-		// when the document is loaded
+		// when the document is loaded as a new document
 		proofOptions = Proof(proof)
 	case Proof:
+		// when the document has just been signed
 		proofOptions = proof
 	default:
 		return errors.New("missing_proof")
 	}
-	//proofOptions, proofOk := doc["proof"].(Proof)
-	//if !proofOk {
-	//	return errors.New("missing_proof")
-	//}
 	delete(doc, "proof")
 	jws, jwsOk := proofOptions["jws"].(string)
 	if jwsOk {
